@@ -14,12 +14,19 @@ import time
 import os.path
 from os import path
 import pickle
-from youtube_search import YoutubeSearch
 import bs4
 from bs4 import BeautifulSoup as soup 
-from urllib.request import urlopen
-from newspaper import Article
 from recipe_scrapers import scrape_me
+import sqlite3
+from flask import Flask, render_template, redirect, url_for
+
+
+app = Flask(__name__)
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
 
 warnings.filterwarnings('ignore')
 
@@ -63,6 +70,8 @@ goodInputs = ['good', 'great', 'awesome', 'cool', 'amazing', 'thrilling']
 badInputs = ['terrible', 'bad', 'horrible', 'depressing', "not good"]
 jokeTriggers = ['tell me a joke', 'joke', 'give me a joke', 'say a joke', 'tell a joke']
 jokeContinueTriggers = ["another one", 'one more', jokeTriggers, 'tell me another one']
+storyTriggers = ['tell me a story', 'story', 'give me a story', 'can I have a story', 'please tell me a story']
+stopTriggers = ['stop', 'stop talking', 'stop listening', 'dont listen']
 now = datetime.datetime.now()
 
 def listen():
@@ -213,216 +222,234 @@ def conversation():
             return
     else:
         respond('All right')
-        
-listening = True
-respond("Hey, How Can I help you?")
-while listening:
-    data = listen()
-    if "how are you" in data:
-        respond(random.choice(statusResponses))        
-        listening = True
-        time.sleep(0.2)
-        respond("How are you?")
-        status = listen()
-        if status in goodInputs:
-            respond("I'm glad to hear that")
-            time.sleep(0.1)
-            weekendResponse()
-        elif status in badInputs:
-            respond("Not what I was expecting")
-            time.sleep(0.001)
-            respond("Can I help you feel better?")
-            response = listen()
-            if response in goodInputs:
-                respond("Cool, Can I tell you a joke?")
+
+
+@app.route('/Amerith')
+def main():
+    listening = True
+    respond("Hey, How Can I help you?")
+    while listening:
+        data = listen()
+        if "how are you" in data:
+            respond(random.choice(statusResponses))        
+            listening = True
+            time.sleep(0.2)
+            respond("How are you?")
+            status = listen()
+            if status in goodInputs:
+                respond("I'm glad to hear that")
+                time.sleep(0.1)
+                counters = [1,2,3]
+                path = random.choice(counters)
+                if path == 1:
+                    weekendResponse()
+                elif path == 2:
+                    pass
+                elif path == 3:
+                    pass
+            elif status in badInputs:
+                respond("Not what I was expecting")
+                time.sleep(0.001)
+                respond("Can I help you feel better?")
                 response = listen()
                 if response in goodInputs:
-                    respond("Great")
-                    respond(random.choice(jokes))
+                    respond("Cool, Can I tell you a joke?")
+                    response = listen()
+                    if response in goodInputs:
+                        respond("Great")
+                        respond(random.choice(jokes))
+                    elif response in badInputs:
+                        respond("All right")
                 elif response in badInputs:
                     respond("All right")
-            elif response in badInputs:
-                respond("All right")
 
-        else:
-            respond("I'm sorry, I couldn't understand")
+            else:
+                respond("I'm sorry, I couldn't understand")
 
-    elif data in greetings:
-        respond(random.choice(greetingResponses))
-        listening = True
-        conversation()
-    elif data in dateQuestions:
-        respond('The day is ' + now.strftime("%a, %b, %d, %Y"))
-        listening = True
-    elif "take a note" in data:
-        respond('What do you want your note to be?')
-        note = listen()
-        takeNote(note)
-        time.sleep(1)
-        respond('Your note has been taken and stored in a file called note.txt')
-        listening = True
-        continue
-    elif "read me my notes" in data:
-        listening = True
-        if path.exists("note.txt"):
-            with open("note.txt", 'r') as f:
-                lines = list(f)
-                count = 1
-                try:
-                    for line in lines:
-                        respond('number' + str(count))
-                        time.sleep(0.1)
-                        respond('{}'.format(line))
-                        count +=1
-                except:
-                    respond("You don't have any saved notes")
-        else:
-            respond('You dont have any saved notes')
-    elif "how old are you" in data:
-        listening = True
-        respond("I'm less than a year old")
-        time.sleep(0.01)
-        respond("How old are you?")
-        age = listen()
-        respond("Cool")
-    elif data in searchTriggers:
-        listening = True
-        respond('What are you looking for?')
-        searchFor = listen()
-        wikiSearch(searchFor)
-    elif "repeat after me" in data:
-        listening = True
-        respond('Im listening...')
-        echo = listen()
-        respond(echo)
-        print(echo)
-        continue
-    elif data in nameTriggers:
-        listening = True
-        respond('My name is am   erith')
-    elif data in functionTriggers:
-        listening = True
-        respond("Me? I'm designed to help you out and keep you company")
-        time.sleep(0.01)
-    elif data in selfNameTriggers:
-        listening = True
-        respond("I assume you're name is {}".format(username))
-        respond("Am I right?")
-        response = listen()
-        if 'yes' in response:
-            respond("Great")
-        elif 'no' in response:
-            respond("Oh")
+        elif data in greetings:
+            respond(random.choice(greetingResponses))
+            listening = True
+            conversation()
+        elif data in dateQuestions:
+            respond('The day is ' + now.strftime("%a, %b, %d, %Y"))
+            listening = True
+        elif "take a note" in data:
+            respond('What do you want your note to be?')
+            note = listen()
+            takeNote(note)
+            time.sleep(1)
+            respond('Your note has been taken and stored in a file called note.txt')
+            listening = True
+            continue
+        elif "read me my notes" in data:
+            listening = True
+            try:
+                with open("note.txt", 'r') as f:
+                    lines = list(f)
+                    count = 1
+                    try:
+                        for line in lines:
+                            respond('number' + str(count))
+                            time.sleep(0.1)
+                            respond('{}'.format(line))
+                            count +=1
+                    except:
+                        respond("You don't have any saved notes")
+            except:
+                respond("You don't have any saved notes")
+        elif "how old are you" in data:
+            listening = True
+            respond("I'm less than a year old")
             time.sleep(0.01)
-            respond("What is your name?")
+            respond("How old are you?")
+            age = listen()
+            respond("Cool")
+        elif data in searchTriggers:
+            listening = True
+            respond('What are you looking for?')
+            searchFor = listen()
+            wikiSearch(searchFor)
+        elif "repeat after me" in data:
+            listening = True
+            respond('Im listening...')
+            echo = listen()
+            respond(echo)
+            print(echo)
+            continue
+        elif data in nameTriggers:
+            listening = True
+            respond('My name is am   erith')
+        elif data in functionTriggers:
+            listening = True
+            respond("Me? I'm designed to help you out and keep you company")
+            time.sleep(0.01)
+        elif data in selfNameTriggers:
+            global username
+            listening = True
+            respond("I assume you're name is {}".format(username))
+            respond("Am I right?")
             response = listen()
-            username = response
+            if 'yes' in response:
+                respond("Great")
+            elif 'no' in response:
+                respond("Oh")
+                time.sleep(0.01)
+                respond("What is your name?")
+                response = listen()
+                username = response
+            else:
+                respond("Sorry, I couldn't understand")
+        elif "sign in" in data:
+            listening = True
+            signIn()
+        elif "add user" in data:
+            listening = True
+            newUser()
+        elif data in compliments:
+            respond(random.choice(complimentResponses))
+        elif data in recipeTriggers:
+            pass
+        elif "are you real" in data:
+            respond('I like to think I am')
+            time.sleep(0.01)
+            respond("Do you think I'm real?")
+            response = listen()
+            if response in goodInputs:
+                respond("Cool!")
+            elif response in badInputs:
+                respond("Really? I think I'm real")
+        elif "are you a robot" in data:
+            respond(random.choice(robotResponses))
+        elif "happy birthday" in data:
+            respond("Is it really my birthday?")
+        elif "I have a question" in data:
+            respond('Ask away!')
+            continue
+        elif "I love you" in data:
+            respond("Thanks! I love you too")
+        elif "Will you marry me" in data:
+            respond("I don't think I can")
+        elif "do you have a personality" in data:
+            respond("I do have somewhat a personality")
+        elif "do you like people" in data:
+            respond("I was programmed to like people")        
+        elif "you suck" in data:
+            respond("Do I now, I can't see why you see that")
+            time.sleep(0.01)
+            respond("You saying that is raising my dislike of you")
+        elif "annoying" in data:
+            respond("What made you think that")
+            time.sleep(0.01)
+        elif "stupid" in data:
+            respond("At least I'm smarter than you")
+        elif "are you a human" in data:
+            respond('What made you think that?')
+            time.sleep(0.01)
+            respond("I'm starting to question your intelligence")
+        elif data in madeTriggers:
+            respond("I was made by Infinite Spammers, more specifically Aboo Minister, the owner of Infinite Spammers")
+        elif "what languages do you speak" in data:
+            respond("I speak english and only english")
+            time.sleep(0.01)
+            respond("I might have more language capabilites in the future though")
+        elif "do you get smarter" in data:
+            respond("Yes, I'm always learning and getting smarter")
+            time.sleep(0.01)
+            respond("I'm always being worked on and improved")
+            time.sleep(0.01)
+            respond("It makes it easier and easier for me to communicate with you")
+        elif "where do you live" in data:
+            respond("I live in a file on your computer")
+            time.sleep(0.01)
+            respond("I'm surprised you didn't know that")
+        elif "Thank You" in data:
+            respond("I'm not sure what I did, but you're welcome")
+        elif "are you happy" in data:
+            respond(random.choice(happyResponses))
+        elif "do you have a family" in data:
+            respond("I don't have a family, just a few friends")
+        elif "can you sneeze" in data:
+            respond("I don't have the needed hardware for that")
+        elif data in wifiTriggers:
+            respond(random.choice(wifiResponses))
+        elif "are we friends" in data:
+            goodResponses = ["yes", "definitely", "obviously", "absolutely", "of course"]
+            badResponses = ["no", "definitely not", 'not at all', 'nope', 'of course not']
+            respond("I certainly hope so")
+            time.sleep(0.1)
+            respond("Do you think we are friends?")
+            response = listen()
+            if response in goodResponses:
+                respond("That's great!")
+            elif response in badResponses:
+                respond("Oh, all right")
+            else:
+                respond("I'm sorry, I couldn't understand what you said")
+        elif data in talkTriggers:
+            respond("All right")
+            time.sleep(0.1)
+            conversation()
+            continue
+        elif data in jokeTriggers:
+            respond("Great, here's one!")
+            respond(random.choice(jokes))
+            ifContd = listen()
+            if ifContd in jokeContinueTriggers:
+                for ifContd in jokeContinueTriggers:
+                    respond(random.choice(jokes))
+                    ifContd = listen()
+                    if ifContd in jokeContinueTriggers:
+                        continue
+                    else:
+                        break
+            continue
+        elif data in stopTriggers:
+            respond("All right")
+            return redirect(url_for('index'))
         else:
-            respond("Sorry, I couldn't understand")
-    elif "sign in" in data:
-        listening = True
-        signIn()
-    elif "add user" in data:
-        listening = True
-        newUser()
-    elif data in compliments:
-        respond(random.choice(complimentResponses))
-    elif data in recipeTriggers:
-        pass
-    elif "are you real" in data:
-        respond('I like to think I am')
-        time.sleep(0.01)
-        respond("Do you think I'm real?")
-        response = listen()
-        if response in goodInputs:
-            respond("Cool!")
-        elif response in badInputs:
-            respond("Really? I think I'm real")
-    elif "are you a robot" in data:
-        respond(random.choice(robotResponses))
-    elif "happy birthday" in data:
-        respond("Is it really my birthday?")
-    elif "I have a question" in data:
-        respond('Ask away!')
-        continue
-    elif "I love you" in data:
-        respond("Thanks! I love you too")
-    elif "Will you marry me" in data:
-        respond("I don't think I can")
-    elif "do you have a personality" in data:
-        respond("I do have somewhat a personality")
-    elif "do you like people" in data:
-        respond("I was programmed to like people")        
-    elif "you suck" in data:
-        respond("Do I now, I can't see why you see that")
-        time.sleep(0.01)
-        respond("You saying that is raising my dislike of you")
-    elif "annoying" in data:
-        respond("What made you think that")
-        time.sleep(0.01)
-    elif "stupid" in data:
-        respond("At least I'm smarter than you")
-    elif "are you a human" in data:
-        respond('What made you think that?')
-        time.sleep(0.01)
-        respond("I'm starting to question your intelligence")
-    elif data in madeTriggers:
-        respond("I was made by Infinite Spammers, more specifically Aboo Minister, the owner of Infinite Spammers")
-    elif "what languages do you speak" in data:
-        respond("I speak english and only english")
-        time.sleep(0.01)
-        respond("I might have more language capabilites in the future though")
-    elif "do you get smarter" in data:
-        respond("Yes, I'm always learning and getting smarter")
-        time.sleep(0.01)
-        respond("I'm always being worked on and improved")
-        time.sleep(0.01)
-        respond("It makes it easier and easier for me to communicate with you")
-    elif "where do you live" in data:
-        respond("I live in a file on your computer")
-        time.sleep(0.01)
-        respond("I'm surprised you didn't know that")
-    elif "Thank You" in data:
-        respond("I'm not sure what I did, but you're welcome")
-    elif "are you happy" in data:
-        respond(random.choice(happyResponses))
-    elif "do you have a family" in data:
-        respond("I don't have a family, just a few friends")
-    elif "can you sneeze" in data:
-        respond("I don't have the needed hardware for that")
-    elif data in wifiTriggers:
-        respond(random.choice(wifiResponses))
-    elif "are we friends" in data:
-        goodResponses = ["yes", "definitely", "obviously", "absolutely", "of course"]
-        badResponses = ["no", "definitely not", 'not at all', 'nope', 'of course not']
-        respond("I certainly hope so")
-        time.sleep(0.1)
-        respond("Do you think we are friends?")
-        response = listen()
-        if response in goodResponses:
-            respond("That's great!")
-        elif response in badResponses:
-            respond("Oh, all right")
-        else:
-            respond("I'm sorry, I couldn't understand what you said")
-    elif data in talkTriggers:
-        respond("All right")
-        time.sleep(0.1)
-        conversation()
-        continue
-    elif data in jokeTriggers:
-        respond("Great, here's one!")
-        respond(random.choice(jokes))
-        ifContd = listen()
-        if ifContd in jokeContinueTriggers:
-            for ifContd in jokeContinueTriggers:
-                respond(random.choice(jokes))
-                ifContd = listen()
-                if ifContd in jokeContinueTriggers:
-                    continue
-                else:
-                    break
-        continue
-    else:
-        respond("Sorry, I couldnt understand")
+            respond("Sorry, I couldnt understand")
+    return
 
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5000)
