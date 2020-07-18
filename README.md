@@ -1,4 +1,4 @@
-# Amerith-1.0.0
+# Amerith-1.1
 ### By Rayyan Cyclegar
 
 Amerith is a virtual assistant designed to talk and have conversations with you. Amerith has commands and triggers which can start up a conversation or trigger features. Amerith can have a continued conversation with the user and can ask and respond to questions. This is currently a beta version of Amerith, so some phrases may not be picked up or understood. Amerith has the following features:
