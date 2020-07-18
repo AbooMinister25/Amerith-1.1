@@ -107,6 +107,11 @@ Amerith has multiple commands and phrases that the program understands. They are
 * `do you have a family`
 * `can you sneeze`
 * `are we friends`
+* Stop Program
+  * `stop`
+  * `stop listening`
+  * `stop talking`
+  * `don't listen`
 
 ## Quick Start Guide
 To start up Amerith download the dependencies and the code file onto your computer, and then run the program in an IDE of some sort. The file is not an executable file yet, and will become one in a few updates. After you run the program, make sure you have a working mic and speaker, and wait for the program to greet you. It will greet you by saying; *Hey, How Can I Help You?* and then will proceed to pring out logs in the console. In the console you should see `listening` which means that the program is waiting for you to say something. If it has picked up something, then the console should pring out `processing` which means the program is processing your answer and figuring out how to respond to you. If the program didn't understand what you said, it should print out `Error: Couldn't understand` in the console and say; *Sorry, I couldn't understand*. You will need a wifi connection to run this.
